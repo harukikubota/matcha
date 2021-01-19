@@ -1,0 +1,5 @@
+%{
+  "espec": {:hex, :espec, "1.8.3", "b55e6e34fd8e64fe5e478fbb0ef94b10f976bb2088a7dfc4a1095f0cef55f113", [:mix], [{:meck, "~> 0.9", [hex: :meck, repo: "hexpm", optional: false]}], "hexpm", "c10e73e4ea0316e30c2066ba0292a810e017cb1a34fd76a7f803083c478d4288"},
+  "leex": {:git, "https://github.com/rvirding/leex.git", "4193142bbc80364a484ea49db4a358539391d94c", []},
+  "meck": {:hex, :meck, "0.9.0", "cb40c223cf403db2d09def59d32d3682074ebecceb64f3e6f6c4477458df124d", [:rebar3], [], "hexpm", "f813e90dd0b89b2516a0201a355e84b1abc78b5751aa0cbf669a9d85a810ac63"},
+}
