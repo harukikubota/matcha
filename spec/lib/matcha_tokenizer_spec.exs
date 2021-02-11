@@ -4,34 +4,49 @@ defmodule Matcha.TokenizerSpec do
   describe "variable" do
     context "simple_name" do
       subject :matcha_tokenizer.string('var_Name1')
-      it do: is_expected() |> to(match_pattern {:ok, [{:variable, 1, :var_Name1}], 1})
+      it do: is_expected() |> to(match_pattern {:ok, [{:var, 1, :var_Name1}], 1})
     end
 
     context "end with '?'" do
       subject :matcha_tokenizer.string('var?')
-      it do: is_expected() |> to(match_pattern {:ok, [{:variable, 1, :var?}], 1})
+      it do: is_expected() |> to(match_pattern {:ok, [{:var, 1, :var?}], 1})
     end
 
     context "end with '!'" do
       subject :matcha_tokenizer.string('var!')
-      it do: is_expected() |> to(match_pattern {:ok, [{:variable, 1, :var!}], 1})
+      it do: is_expected() |> to(match_pattern {:ok, [{:var, 1, :var!}], 1})
     end
 
     context "unuse_var only '_'" do
       subject :matcha_tokenizer.string('_')
-      it do: is_expected() |> to(match_pattern {:ok, [{:unuse_var, 1}], 1})
+      it do: is_expected() |> to(match_pattern {:ok, [{:unuse_var, 1, :_}], 1})
     end
 
     context "unuse_var" do
       subject :matcha_tokenizer.string('_unuse')
-      it do: is_expected() |> to(match_pattern {:ok, [{:unuse_var, 1}], 1})
+      it do: is_expected() |> to(match_pattern {:ok, [{:unuse_var, 1, :_unuse}], 1})
     end
   end
 
   describe "value" do
-    context "integer" do
+    context "positive integer" do
       subject :matcha_tokenizer.string('1234598760')
       it do: is_expected() |> to(match_pattern {:ok, [{:integer, 1, 1234598760}], 1})
+    end
+
+    context "negative integer" do
+      subject :matcha_tokenizer.string('-10')
+      it do: is_expected() |> to(match_pattern {:ok, [{:integer, 1, -10}], 1})
+    end
+
+    context "positive float" do
+      subject :matcha_tokenizer.string('3.14')
+      it do: is_expected() |> to(match_pattern {:ok, [{:float, 1, 3.14}], 1})
+    end
+
+    context "negative float" do
+      subject :matcha_tokenizer.string('-1.4142')
+      it do: is_expected() |> to(match_pattern {:ok, [{:float, 1, -1.4142}], 1})
     end
 
     context "string" do
@@ -41,7 +56,12 @@ defmodule Matcha.TokenizerSpec do
 
     context "string with meta" do
       subject :matcha_tokenizer.string('"\"\'hoge\n\t\r"')
-      it do: is_expected() |> to(match_pattern {:ok, [{:string, 1, "\"\'hoge\n\t\r"}], _})
+      it do: is_expected() |> to(match_pattern {:ok, [{:string, 1, "\"'hoge\n\t\r"}], _})
+    end
+
+    context "charlist" do
+      subject :matcha_tokenizer.string('\'character_list\'')
+      it do: is_expected() |> to(match_pattern {:ok, [{:charlist, 1, 'character_list'}], 1})
     end
 
     context "atom(symbol)" do
@@ -111,10 +131,10 @@ defmodule Matcha.TokenizerSpec do
   end
 
   describe "assoc_key" do
-    let :quoted_key, do: :matcha_tokenizer.string('"key":')
+    let :quoted_key, do: :matcha_tokenizer.string('"quoted-key":')
     let :symbol_key, do: :matcha_tokenizer.string('key:')
 
-    it do: expect quoted_key() |> to(match_pattern {:ok, [{:quoted_assoc_key, 1, :key}], 1})
+    it do: expect quoted_key() |> to(match_pattern {:ok, [{:assoc_key, 1, :"quoted-key"}], 1})
     it do: expect symbol_key() |> to(match_pattern {:ok, [{:assoc_key, 1, :key}], 1})
   end
 end

@@ -1,11 +1,19 @@
 Definitions.
 
-INT       = [0-9]+
-STRING    = "(\n|.)*"
-ATOM      = :[a-zA-Z0-9_]*(\?|\!)?
-MODULE    = [A-Z][A-Za-z0-9]*(\.[A-Z][A-Za-z0-9]*)*
+D       = [0-9]+
+S       = [a-zA-Z0-9_]*
+ATOM_TAIL = (\?|\!)?
+ATOM_BODY = [a-zA-Z_]{S}{ATOM_TAIL}
 
-VARIABLE  = [a-z][a-zA-Z0-9_]*(\?|\!)?
+INT     = \-?{D}
+FLOAT   = \-?{D}\.{D}
+STRING  = "[^"\\]*(.[^"\\]*)*"
+CHAR    = '[^'\\]*(\\.[^'\\]*)*'
+
+ATOM = ((true|false|nil)|:{ATOM_BODY}|:{STRING})
+MODULE  = [A-Z]{S}(\.[A-Z]{S})*
+
+VARIABLE  = [a-z]{S}{ATOM_TAIL}
 UNUSE_VAR = _({VARIABLE})?
 
 ASSOC_KEY_SYMBOL = {VARIABLE}:
@@ -15,12 +23,19 @@ WHITESPACE = [\s\t\n\r]
 
 Rules.
 
-{INT}       : {token, {integer,   TokenLine, list_to_integer(TokenChars)}}.
-{STRING}    : {token, {string,    TokenLine, to_string(TokenChars)}}.
-{ATOM}      : {token, {atom,      TokenLine, to_atom(TokenChars)}}.
-{VARIABLE}  : {token, {variable,  TokenLine, to_atom(TokenChars)}}.
-{UNUSE_VAR} : {token, {unuse_var, TokenLine}}.
-{MODULE}    : {token, {module,    TokenLine, to_atom(TokenChars, module)}}.
+% val
+{INT}    : {token, {integer,  TokenLine, list_to_integer(TokenChars)}}.
+{FLOAT}  : {token, {float,    TokenLine, list_to_float(TokenChars)}}.
+{STRING} : {token, {string,   TokenLine, to_string(TokenChars)}}.
+{CHAR}   : {token, {charlist, TokenLine, to_charlist(TokenChars)}}.
+
+% atom
+{ATOM}    : {token, {atom,   TokenLine, to_atom(TokenChars)}}.
+{MODULE}  : {token, {module, TokenLine, to_atom(TokenChars, module)}}.
+
+% var
+{VARIABLE}  : {token, {var,       TokenLine, to_atom(TokenChars)}}.
+{UNUSE_VAR} : {token, {unuse_var, TokenLine, to_atom(TokenChars)}}.
 
 %% separators.
 ,  : {token, {',', TokenLine}}.
@@ -42,18 +57,18 @@ Rules.
 
 %% prefix modifier.
 \^  : {token, {'^',  TokenLine}}.
-\** : {token, {'**', TokenLine}}.
-\*  : {token, {'=',  TokenLine}}.
+\*\* : {token, {'**', TokenLine}}.
+\*  : {token, {'*',  TokenLine}}.
 
 %% data_structure modifier.
 %% map
 \%   : {token, {'%', TokenLine}}.
 %% range
+\.   : {token, {'.', TokenLine}}.
 \.\. : {token, {'..', TokenLine}}.
 
 %% map assoc_key
-{ASSOC_KEY_SYMBOL} : {token, {assoc_key,        TokenLine, to_atom(TokenChars)}}.
-{ASSOC_KEY_STRING} : {token, {quoted_assoc_key, TokenLine, to_atom(TokenChars)}}.
+{ASSOC_KEY_SYMBOL}|{ASSOC_KEY_STRING} : {token, {assoc_key, TokenLine, to_atom(TokenChars)}}.
 
 {WHITESPACE}+ : skip_token.
 
@@ -62,13 +77,6 @@ Erlang code.
 to_atom(TokenChars) -> 'Elixir.Matcha.Erl.Helpers':to_atom(TokenChars).
 to_atom(TokenChars, Atom) -> 'Elixir.Matcha.Erl.Helpers':to_atom(TokenChars, Atom).
 
-to_string(Token) ->
-  S = lists:sublist(Token, 2, length(Token) - 2),
-  case catch list_to_atom(gen_string(S)) of
-    {'EXIT',_} -> {error,"illegal atom " ++ Token};
-    String -> atom_to_binary(String)
-  end.
+to_string(Token) -> 'Elixir.Matcha.Erl.Helpers':to_binary(Token).
 
-gen_string([C|Cs]) ->
-    [C|gen_string(Cs)];
-gen_string([]) -> [].
+to_charlist(Token) ->'Elixir.Matcha.Erl.Helpers':to_charlist(Token).
